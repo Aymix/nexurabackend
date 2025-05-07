@@ -1,6 +1,36 @@
 /**
  * Twitter API integration utility
  */
+const crypto = require('crypto');
+const OAuth = require('oauth-1.0a');
+const { getTwitterCredentials, isTwitterConfigured } = require('./settingsUtil');
+
+/**
+ * Generate OAuth 1.0a authorization header for Twitter
+ * @param {string} method - HTTP method (GET, POST, etc)
+ * @param {string} url - The request URL
+ * @param {Object} credentials - Twitter API credentials
+ * @returns {string} - Authorization header value
+ */
+function generateAuthHeader(method, url, credentials) {
+  const oauth = OAuth({
+    consumer: { key: credentials.apiKey, secret: credentials.apiKeySecret },
+    signature_method: 'HMAC-SHA1',
+    hash_function(base_string, key) {
+      return crypto
+        .createHmac('sha1', key)
+        .update(base_string)
+        .digest('base64');
+    },
+  });
+
+  const authorization = oauth.authorize(
+    { url, method },
+    { key: credentials.accessToken, secret: credentials.accessTokenSecret }
+  );
+
+  return oauth.toHeader(authorization).Authorization;
+}
 
 /**
  * Post a tweet using the Twitter API
@@ -9,10 +39,23 @@
  */
 async function postTweet(content) {
   try {
+    // Check if Twitter is configured
+    if (!isTwitterConfigured()) {
+      return {
+        success: false,
+        error: 'Twitter API is not configured',
+        details: 'Please configure your Twitter API keys in the settings page'
+      };
+    }
+
+    const credentials = getTwitterCredentials();
+    const url = 'https://api.twitter.com/2/tweets';
+    const method = 'POST';
+    
     // Configure headers with OAuth authentication
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("Authorization", "OAuth oauth_consumer_key=\"mnrYieqoKOTta3AIZl7tVN90E\",oauth_token=\"1916899758645395456-gHNZqZmN6TEKbxpecijScv4IcTTCoK\",oauth_signature_method=\"HMAC-SHA1\",oauth_timestamp=\"1746630335\",oauth_nonce=\"2cN2H8lliZS\",oauth_version=\"1.0\",oauth_signature=\"pnAScqhAG%2F9RAB%2FgwFA3zNtgVyo%3D\"");
+    myHeaders.append("Authorization", generateAuthHeader(method, url, credentials));
 
     // Prepare the request body
     const raw = JSON.stringify({

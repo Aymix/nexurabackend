@@ -330,13 +330,13 @@ exports.postTweet = async (req, res) => {
   try {
     // Find the post
     const post = await Post.findById(req.params.id);
-    
+    console.log(post);
     if (!post) {
       return res.status(404).json({ error: 'Post not found' });
     }
     
     // Get custom tweet content or use post title
-    const tweetContent = req.body.content || `${post.title} #Nexura`;
+    const tweetContent = req.body.content || `${post.content} #Nexura`;
     
     // Post to Twitter
     console.log('Posting to Twitter:', tweetContent);
