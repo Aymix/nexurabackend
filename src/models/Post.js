@@ -20,6 +20,18 @@ const PostSchema = new Schema({
   imageUrl: {
     type: String
   },
+  scheduledDate: {
+    type: Date,
+    default: null
+  },
+  isScheduled: {
+    type: Boolean,
+    default: false
+  },
+  isPosted: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now
