@@ -34,7 +34,7 @@ mongoose.connect(MONGODB_URI)
 // Routes
 app.use('/api/posts', postRoutes);
 app.use('/api/scheduler', schedulerRoutes);
-app.use('/settings', settingsRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Set up cron job to process scheduled posts every minute
 const schedulerUtil = require('./utils/schedulerUtil');

@@ -1,0 +1,13 @@
+{
+  "twitter": {
+    "apiKey": "mnrYieqoKOTta3AIZl7tVN90E",
+    "apiKeySecret": "ezzoivo9DYPlpRDNXb69A9HVdqtzQXglt0AfWZeVdhsGRqVnXl",
+    "accessToken": "1916899758645395456-gHNZqZmN6TEKbxpecijScv4IcTTCoK",
+    "accessTokenSecret": "4JIjsecHBbuLEyr10n81v7P8rcS8TIg2PyeMaWwgSux0V"
+  },
+  "facebook": {
+    "appId": "",
+    "appSecret": "",
+    "accessToken": ""
+  }
+}
