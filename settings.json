@@ -1,9 +1,9 @@
 {
   "twitter": {
-    "apiKey": "mnrYieqoKOTta3AIZl7tVN90E",
-    "apiKeySecret": "ezzoivo9DYPlpRDNXb69A9HVdqtzQXglt0AfWZeVdhsGRqVnXl",
-    "accessToken": "1916899758645395456-gHNZqZmN6TEKbxpecijScv4IcTTCoK",
-    "accessTokenSecret": "4JIjsecHBbuLEyr10n81v7P8rcS8TIg2PyeMaWwgSux0V"
+    "apiKey": "1BnhFeUuQEQUMHIDCvUisni6v",
+    "apiKeySecret": "KxuvskWi0zjMb222knGd2y2SvCEInoZ8RRmQWuWo1z5AHqnDBd",
+    "accessToken": "105855279-YDKw0n7nByZ6aC8K1wJ7c8WwoSs7GTkl8PKLe4IK",
+    "accessTokenSecret": "Lz3tEk3Q4gV1qKga3VOs6PJq60MMv6D1gPb2V0mzK321D"
   },
   "facebook": {
     "appId": "",
