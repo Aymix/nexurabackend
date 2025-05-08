@@ -17,9 +17,12 @@ exports.getAllPosts = async (req, res) => {
     // Build filter object
     const filter = {};
     
-    // Add title search filter if provided
+    // Add search filter for title or content if provided
     if (search) {
-      filter.title = { $regex: search, $options: 'i' }; // Case-insensitive search
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } }, // Case-insensitive search in title
+        { content: { $regex: search, $options: 'i' } } // Case-insensitive search in content
+      ];
     }
     
     // Add category filter if provided
@@ -76,9 +79,18 @@ exports.getAllPosts = async (req, res) => {
       .skip(skip)
       .limit(limit);
     
-    // Return paginated and filtered response
+    // Process each post for backward compatibility
+    const processedPosts = posts.map(post => {
+      const postData = post.toObject();
+      if (postData.isPosted !== undefined && postData.posted_status === undefined) {
+        postData.posted_status = postData.isPosted;
+      }
+      return postData;
+    });
+    
+    // Return paginated and filtered response with processed posts
     res.status(200).json({
-      posts,
+      posts: processedPosts,
       totalPosts,
       totalPages,
       currentPage: page,
@@ -111,8 +123,14 @@ exports.getPostById = async (req, res) => {
     
     console.log(`Found post: ${post.title} with ID: ${post._id}`);
     
-    // Return the post (generations are already included via virtual populate)
-    res.status(200).json(post);
+    // Ensure backward compatibility with posts that might have isPosted instead of posted_status
+    const postData = post.toObject();
+    if (postData.isPosted !== undefined && postData.posted_status === undefined) {
+      postData.posted_status = postData.isPosted;
+    }
+    
+    // Return the post with normalized data (generations are already included via virtual populate)
+    res.status(200).json(postData);
   } catch (error) {
     console.error(`Error fetching post ${req.params.id}:`, error);
     res.status(500).json({ error: 'Failed to fetch post', details: error.message });
@@ -330,27 +348,80 @@ exports.postTweet = async (req, res) => {
   try {
     // Find the post
     const post = await Post.findById(req.params.id);
-    console.log(post);
+    console.log('Original post found:', post);
     if (!post) {
       return res.status(404).json({ error: 'Post not found' });
     }
     
     // Get custom tweet content or use post title
-    const tweetContent = req.body.content || `${post.content} #Nexura`;
+    const tweetContent = req.body.content || `${post.title} #Nexura`;
     
     // Post to Twitter
     console.log('Posting to Twitter:', tweetContent);
     const tweetResult = await twitterUtil.postTweet(tweetContent);
     
     if (tweetResult.success) {
-      res.status(200).json({
-        message: 'Tweet posted successfully',
-        tweetData: tweetResult.data
-      });
+      console.log('Tweet successful, updating post status with multiple methods for reliability...');
+      
+      try {
+        // Method 1: First try direct update on the post object
+        post.isPosted = true;
+        post.posted_status = true;
+        await post.save();
+        console.log('Method 1 complete - Direct update and save');
+        
+        // Method 2: Also try findByIdAndUpdate for redundancy
+        const updatedPost = await Post.findByIdAndUpdate(
+          req.params.id,
+          { 
+            $set: { 
+              isPosted: true, 
+              posted_status: true 
+            } 
+          },
+          { new: true } // Return the updated document
+        );
+        
+        if (!updatedPost) {
+          console.error('Post not found during update with Method 2');
+          // Continue anyway since Method 1 might have worked
+        } else {
+          console.log('Method 2 complete - findByIdAndUpdate');
+        }
+        
+        // Method 3: Direct updateOne as final fallback
+        await Post.updateOne(
+          { _id: req.params.id },
+          { $set: { isPosted: true, posted_status: true } }
+        );
+        console.log('Method 3 complete - updateOne');
+        
+        // Verify the update by fetching the post again
+        const verifiedPost = await Post.findById(req.params.id);
+        console.log('POST-UPDATE VERIFICATION:', verifiedPost);
+        console.log('Verified updated fields - isPosted:', verifiedPost.isPosted, 'posted_status:', verifiedPost.posted_status);
+        
+        // Return success response with verified post data
+        res.status(200).json({
+          message: 'Tweet posted successfully',
+          tweetData: tweetResult.data,
+          post: {
+            _id: verifiedPost._id,
+            isPosted: verifiedPost.isPosted,
+            posted_status: verifiedPost.posted_status
+          }
+        });
+      } catch (updateError) {
+        console.error('Error updating post status:', updateError);
+        res.status(500).json({
+          error: 'Failed to update post status',
+          details: updateError.message
+        });
+      }
     } else {
       res.status(500).json({
         error: 'Failed to post tweet',
-        details: tweetResult.details
+        details: tweetResult.error
       });
     }
   } catch (error) {

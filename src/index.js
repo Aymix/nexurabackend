@@ -7,7 +7,6 @@ const dotenv = require('dotenv');
 // Import routes
 const postRoutes = require('./routes/posts');
 const schedulerRoutes = require('./routes/scheduler');
-const settingsRoutes = require('./routes/settings');
 
 // Load environment variables
 dotenv.config();
@@ -34,7 +33,6 @@ mongoose.connect(MONGODB_URI)
 // Routes
 app.use('/api/posts', postRoutes);
 app.use('/api/scheduler', schedulerRoutes);
-app.use('/api/settings', settingsRoutes);
 
 // Set up cron job to process scheduled posts every minute
 const schedulerUtil = require('./utils/schedulerUtil');

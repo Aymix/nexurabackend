@@ -28,6 +28,10 @@ const PostSchema = new Schema({
     type: Boolean,
     default: false
   },
+  posted_status: {
+    type: Boolean,
+    default: false
+  },
   isPosted: {
     type: Boolean,
     default: false
